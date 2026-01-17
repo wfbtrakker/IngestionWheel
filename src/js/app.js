@@ -19,6 +19,9 @@ const App = {
         // Apply theme
         this.applyTheme();
 
+        // Setup app title
+        this.setupAppTitle();
+
         // Check first visit
         if (Storage.isFirstVisit()) {
             this.showView('welcome');
@@ -53,6 +56,11 @@ const App = {
             viewName = 'wheel';
         }
 
+        // Clear winner effects when switching away from wheel view
+        if (viewName !== 'wheel' && typeof Effects !== 'undefined') {
+            Effects.clearEffects();
+        }
+
         // Hide all views
         document.querySelectorAll('.view').forEach(view => {
             view.classList.remove('active');
@@ -84,6 +92,57 @@ const App = {
             this.renderHistoryList();
             this.renderStatistics();
         }
+
+        // Update settings form when switching to settings view
+        if (viewName === 'settings') {
+            const appTitleInput = document.getElementById('app-title-input');
+            if (appTitleInput) {
+                appTitleInput.value = Storage.getSetting('appTitle') || 'Spinning Wheel';
+            }
+        }
+    },
+
+    /**
+     * Setup app title (editable wheel name)
+     */
+    setupAppTitle() {
+        const appTitle = document.getElementById('app-title');
+
+        // Load saved title or use default
+        const savedTitle = Storage.getSetting('appTitle') || 'Spinning Wheel';
+        appTitle.textContent = savedTitle;
+        // Set initial browser tab title
+        document.title = savedTitle;
+
+        // Save on blur (when user clicks away)
+        appTitle.addEventListener('blur', () => {
+            let title = appTitle.textContent.trim();
+            // Prevent empty title
+            if (!title) {
+                title = 'Spinning Wheel';
+                appTitle.textContent = title;
+            }
+            Storage.setSetting('appTitle', title);
+            // Update browser tab title
+            document.title = title;
+        });
+
+        // Save on Enter key
+        appTitle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                appTitle.blur(); // Trigger blur event to save
+            }
+        });
+
+        // Select all text when focused for easy editing
+        appTitle.addEventListener('focus', () => {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(appTitle);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        });
     },
 
     /**
@@ -163,18 +222,6 @@ const App = {
 
         // Trigger winner effect
         Effects.triggerWinnerEffect(user.name);
-
-        // Setup result buttons
-        document.getElementById('copy-result').onclick = () => {
-            navigator.clipboard.writeText(user.name);
-            alert('Copied to clipboard!');
-        };
-
-        document.getElementById('share-result').onclick = () => {
-            const link = Storage.generateShareableLink();
-            navigator.clipboard.writeText(link);
-            alert('Shareable link copied to clipboard!');
-        };
     },
 
     /**
@@ -182,11 +229,11 @@ const App = {
      */
     updateWheelState() {
         const spinButton = document.getElementById('spin-button');
-        const users = Storage.getUsers();
+        const enabledUsers = Storage.getEnabledUsers();
 
-        if (users.length < 2) {
+        if (enabledUsers.length < 2) {
             spinButton.disabled = true;
-            spinButton.title = 'Add at least 2 users to spin';
+            spinButton.title = enabledUsers.length === 0 ? 'Enable at least 2 users to spin' : 'Enable at least 1 more user to spin';
         } else {
             spinButton.disabled = false;
             spinButton.title = 'Spin the wheel (Enter or Space)';
@@ -201,42 +248,6 @@ const App = {
     setupUserEvents() {
         const nameInput = document.getElementById('user-name-input');
         const addBtn = document.getElementById('add-user-btn');
-        const colorPalette = document.getElementById('color-palette');
-        const customColor = document.getElementById('custom-color');
-        const colorPreview = document.getElementById('color-preview');
-
-        // Render color palette
-        Storage.COLOR_PALETTE.forEach(color => {
-            const option = document.createElement('div');
-            option.className = 'color-option';
-            option.style.backgroundColor = color;
-            option.addEventListener('click', () => {
-                document.querySelectorAll('.color-option').forEach(o => {
-                    o.classList.remove('selected');
-                });
-                option.classList.add('selected');
-                this.selectedColor = color;
-                colorPreview.style.backgroundColor = color;
-            });
-            colorPalette.appendChild(option);
-        });
-
-        // Select first color by default
-        const firstOption = colorPalette.firstChild;
-        if (firstOption) {
-            firstOption.classList.add('selected');
-            this.selectedColor = Storage.COLOR_PALETTE[0];
-            colorPreview.style.backgroundColor = this.selectedColor;
-        }
-
-        // Custom color picker
-        customColor.addEventListener('input', (e) => {
-            this.selectedColor = e.target.value;
-            colorPreview.style.backgroundColor = this.selectedColor;
-            document.querySelectorAll('.color-option').forEach(o => {
-                o.classList.remove('selected');
-            });
-        });
 
         // Add user
         addBtn.addEventListener('click', () => {
@@ -256,6 +267,22 @@ const App = {
         nameInput.addEventListener('input', () => {
             this.validateUserName(nameInput.value);
         });
+    },
+
+    /**
+     * Get an unused color from the palette
+     */
+    getUnusedColor() {
+        const users = Storage.getUsers();
+        const usedColors = users.map(u => u.color);
+
+        // Find first unused color from palette
+        // With 22 colors and max 20 users, there will always be unused colors
+        for (let color of Storage.COLOR_PALETTE) {
+            if (!usedColors.includes(color)) {
+                return color;
+            }
+        }
     },
 
     /**
@@ -308,7 +335,8 @@ const App = {
             return;
         }
 
-        Storage.addUser(name, this.selectedColor);
+        const color = this.getUnusedColor();
+        Storage.addUser(name, color);
         this.renderUsersList();
         this.updateWheelState();
         Wheel.render();
@@ -334,6 +362,9 @@ const App = {
         users.forEach(user => {
             const card = document.createElement('div');
             card.className = 'user-card';
+            if (user.enabled === false) {
+                card.classList.add('user-disabled');
+            }
 
             const colorDiv = document.createElement('div');
             colorDiv.className = 'user-color';
@@ -346,7 +377,28 @@ const App = {
             nameDiv.className = 'user-name';
             nameDiv.textContent = user.name;
 
+            // Add enabled/disabled checkbox
+            const checkboxContainer = document.createElement('label');
+            checkboxContainer.className = 'user-enabled-toggle';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = user.enabled !== false;
+            checkbox.addEventListener('change', (e) => {
+                Storage.toggleUserEnabled(user.id);
+                this.renderUsersList();
+                this.updateWheelState();
+                Wheel.render();
+            });
+
+            const checkboxLabel = document.createElement('span');
+            checkboxLabel.textContent = 'Enabled';
+
+            checkboxContainer.appendChild(checkbox);
+            checkboxContainer.appendChild(checkboxLabel);
+
             infoDiv.appendChild(nameDiv);
+            infoDiv.appendChild(checkboxContainer);
 
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'user-actions';
@@ -587,11 +639,9 @@ const App = {
             entryDiv.className = 'history-entry';
 
             entryDiv.innerHTML = `
-                <div>
-                    <div class="history-entry-time">${dateStr} ${timeStr}</div>
-                    <div class="history-entry-name">${entry.userName}</div>
-                    <div class="history-entry-number">Spin #${entry.spinNumber}</div>
-                </div>
+                <span class="history-entry-number">Spin #${entry.spinNumber}</span>
+                <span class="history-entry-time">${dateStr} ${timeStr}</span>
+                <span class="history-entry-name">${entry.userName}</span>
             `;
 
             entriesContainer.appendChild(entryDiv);
@@ -656,12 +706,12 @@ const App = {
         const durationDisplay = document.getElementById('duration-display');
         const animationSpeed = document.getElementById('animation-speed');
         const rotationDirection = document.getElementById('rotation-direction');
+        const appTitleInput = document.getElementById('app-title-input');
         const wheelTitle = document.getElementById('wheel-title');
         const sliceAnimation = document.getElementById('slice-animation');
         const winnerEffect = document.getElementById('winner-effect');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const soundToggle = document.getElementById('sound-toggle');
-        const generateLink = document.getElementById('generate-link');
         const resetApp = document.getElementById('reset-app');
 
         // Load current settings
@@ -669,6 +719,7 @@ const App = {
         spinDurationSlider.value = settings.spinDuration;
         animationSpeed.value = settings.animationSpeed;
         rotationDirection.value = settings.rotationDirection;
+        appTitleInput.value = Storage.getSetting('appTitle') || 'Spinning Wheel';
         wheelTitle.value = settings.wheelTitle;
         sliceAnimation.value = settings.sliceAnimation;
         winnerEffect.value = settings.winnerEffect;
@@ -692,7 +743,23 @@ const App = {
             Storage.setSetting('rotationDirection', e.target.value);
         });
 
-        // Wheel title
+        // App title (wheel name in navbar)
+        appTitleInput.addEventListener('input', (e) => {
+            let title = e.target.value.trim();
+            if (!title) {
+                title = 'Spinning Wheel';
+            }
+            Storage.setSetting('appTitle', title);
+            // Update the navbar title immediately
+            const appTitle = document.getElementById('app-title');
+            if (appTitle) {
+                appTitle.textContent = title;
+            }
+            // Update browser tab title
+            document.title = title;
+        });
+
+        // Wheel center title
         wheelTitle.addEventListener('change', (e) => {
             const title = e.target.value || 'Pick a Winner';
             Storage.setSetting('wheelTitle', title);
@@ -721,24 +788,6 @@ const App = {
             Storage.setSetting('winnerEffect', e.target.value);
         });
 
-        // Generate shareable link
-        generateLink.addEventListener('click', () => {
-            const link = Storage.generateShareableLink();
-            const display = document.getElementById('shared-link-display');
-            const input = document.getElementById('shared-link-input');
-
-            display.classList.remove('hidden');
-            input.value = link;
-            input.select();
-        });
-
-        // Copy link
-        document.getElementById('copy-link').addEventListener('click', () => {
-            const input = document.getElementById('shared-link-input');
-            navigator.clipboard.writeText(input.value);
-            alert('Link copied to clipboard!');
-        });
-
         // Reset app
         resetApp.addEventListener('click', () => {
             this.showConfirmDialog(
@@ -749,6 +798,50 @@ const App = {
                     location.reload();
                 }
             );
+        });
+
+        // Download data
+        const downloadData = document.getElementById('download-data');
+        downloadData.addEventListener('click', () => {
+            Storage.downloadDataAsJSON();
+            alert('Data downloaded successfully!');
+        });
+
+        // Upload data
+        const uploadDataBtn = document.getElementById('upload-data-btn');
+        const uploadDataInput = document.getElementById('upload-data-input');
+
+        uploadDataBtn.addEventListener('click', () => {
+            uploadDataInput.click();
+        });
+
+        uploadDataInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.showConfirmDialog(
+                    'Upload Data?',
+                    'This will replace all current data. Make sure you have a backup!',
+                    () => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            try {
+                                const data = JSON.parse(e.target.result);
+                                const success = Storage.importAllData(data);
+                                if (success) {
+                                    alert('Data uploaded successfully! Reloading...');
+                                    location.reload();
+                                } else {
+                                    alert('Error uploading data. Please check the file format.');
+                                }
+                            } catch (error) {
+                                alert('Invalid JSON file. Please select a valid backup file.');
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                );
+            }
+            uploadDataInput.value = '';
         });
     },
 

@@ -43,9 +43,16 @@ const Sounds = {
             audio.src = this.AUDIO_PATHS[name];
             audio.loop = loop;
             audio.volume = 0.7;
+
+            // Handle load errors silently
+            audio.addEventListener('error', () => {
+                // Silently disable this audio element if file doesn't exist
+                this.audioElements[name] = null;
+            });
+
             this.audioElements[name] = audio;
         } catch (e) {
-            console.warn(`Could not create audio element for ${name}:`, e);
+            // Silently handle missing audio files
             this.audioElements[name] = null;
         }
     },
@@ -84,13 +91,12 @@ const Sounds = {
                     .then(() => {
                         // Audio started playing
                     })
-                    .catch(error => {
-                        // Autoplay prevented
-                        console.warn('Autoplay prevented:', error);
+                    .catch(() => {
+                        // Autoplay prevented or file missing - silently ignore
                     });
             }
         } catch (e) {
-            console.warn('Error playing spinning sound:', e);
+            // Silently handle errors (file missing, etc.)
         }
     },
 
@@ -104,7 +110,7 @@ const Sounds = {
             this.audioElements.spinning.pause();
             this.audioElements.spinning.currentTime = 0;
         } catch (e) {
-            console.warn('Error stopping spinning sound:', e);
+            // Silently handle errors
         }
     },
 
@@ -118,12 +124,12 @@ const Sounds = {
             this.audioElements.stop.currentTime = 0;
             const playPromise = this.audioElements.stop.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.warn('Autoplay prevented:', error);
+                playPromise.catch(() => {
+                    // Autoplay prevented or file missing - silently ignore
                 });
             }
         } catch (e) {
-            console.warn('Error playing stop sound:', e);
+            // Silently handle errors
         }
     },
 
@@ -137,12 +143,12 @@ const Sounds = {
             this.audioElements.fanfare.currentTime = 0;
             const playPromise = this.audioElements.fanfare.play();
             if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.warn('Autoplay prevented:', error);
+                playPromise.catch(() => {
+                    // Autoplay prevented or file missing - silently ignore
                 });
             }
         } catch (e) {
-            console.warn('Error playing fanfare sound:', e);
+            // Silently handle errors
         }
     },
 

@@ -4,6 +4,50 @@
  */
 
 const Effects = {
+    activeIntervals: [],
+
+    /**
+     * Clear all active winner effects
+     */
+    clearEffects() {
+        // Remove all effect elements from DOM
+        const effectClasses = [
+            'confetti',
+            'firework-particle',
+            'balloon',
+            'sparkle',
+            'light-pulse',
+            'ticker-tape',
+            'screen-flash',
+            'winner-popup'
+        ];
+
+        effectClasses.forEach(className => {
+            const elements = document.querySelectorAll(`.${className}`);
+            elements.forEach(el => el.remove());
+        });
+
+        // Clear any active intervals
+        this.activeIntervals.forEach(interval => clearInterval(interval));
+        this.activeIntervals = [];
+
+        // Remove effect classes from result display
+        const resultDisplay = document.getElementById('result-display');
+        if (resultDisplay) {
+            resultDisplay.classList.remove('glow-pulse-effect');
+            const resultContent = resultDisplay.querySelector('.result-content');
+            if (resultContent) {
+                resultContent.style.backgroundColor = '';
+            }
+        }
+
+        // Remove bounce effect from result name
+        const resultName = document.getElementById('result-name');
+        if (resultName) {
+            resultName.classList.remove('bounce-effect');
+        }
+    },
+
     /**
      * Trigger winner effect based on setting
      */
@@ -81,41 +125,45 @@ const Effects = {
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
 
-        for (let i = 0; i < 30; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'firework-particle';
-            particle.style.left = centerX + 'px';
-            particle.style.top = centerY + 'px';
-            particle.style.backgroundColor = ['#FF6B6B', '#FFE66D', '#FF8C42'][Math.floor(Math.random() * 3)];
-            document.body.appendChild(particle);
+        // Create multiple bursts
+        for (let burst = 0; burst < 3; burst++) {
+            setTimeout(() => {
+                for (let i = 0; i < 50; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework-particle';
+                    particle.style.left = centerX + 'px';
+                    particle.style.top = centerY + 'px';
+                    particle.style.backgroundColor = ['#FF6B6B', '#FFE66D', '#FF8C42', '#4ECDC4', '#C7CEEA'][Math.floor(Math.random() * 5)];
+                    document.body.appendChild(particle);
 
-            const angle = (Math.PI * 2 * i) / 30;
-            const velocity = 5 + Math.random() * 5;
-            const vx = Math.cos(angle) * velocity;
-            const vy = Math.sin(angle) * velocity;
+                    const angle = (Math.PI * 2 * i) / 50 + (Math.random() * 0.2);
+                    const velocity = 3 + Math.random() * 8;
+                    const vx = Math.cos(angle) * velocity;
+                    const vy = Math.sin(angle) * velocity;
 
-            let x = centerX;
-            let y = centerY;
-            let frame = 0;
+                    let x = centerX;
+                    let y = centerY;
+                    let frame = 0;
 
-            const animate = () => {
-                frame++;
-                x += vx;
-                y += vy;
-                vy += 0.2; // gravity
+                    const animate = () => {
+                        frame++;
+                        x += vx;
+                        y += vy + (frame * 0.1); // accelerating downward
 
-                particle.style.left = x + 'px';
-                particle.style.top = y + 'px';
-                particle.style.opacity = 1 - (frame / 60);
+                        particle.style.left = x + 'px';
+                        particle.style.top = y + 'px';
+                        particle.style.opacity = 1 - (frame / 80);
 
-                if (frame < 60) {
-                    requestAnimationFrame(animate);
-                } else {
-                    particle.remove();
+                        if (frame < 80) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            particle.remove();
+                        }
+                    };
+
+                    animate();
                 }
-            };
-
-            animate();
+            }, burst * 300);
         }
     },
 
@@ -176,9 +224,14 @@ const Effects = {
 
             if (colorIndex >= colors.length * 3) {
                 clearInterval(colorInterval);
+                const idx = this.activeIntervals.indexOf(colorInterval);
+                if (idx > -1) this.activeIntervals.splice(idx, 1);
                 resultContent.style.backgroundColor = '';
             }
         }, 100);
+
+        // Track interval so it can be cleared
+        this.activeIntervals.push(colorInterval);
     },
 
     /**

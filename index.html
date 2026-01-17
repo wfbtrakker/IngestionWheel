@@ -10,7 +10,7 @@
     <div class="app-container">
         <!-- Navigation Bar -->
         <nav class="navbar">
-            <div class="nav-brand">Spinning Wheel</div>
+            <div class="nav-brand" id="app-title" contenteditable="true" title="Click to edit wheel name">Spinning Wheel</div>
             <div class="nav-tabs">
                 <button class="nav-tab active" data-view="wheel" title="Wheel (1)">
                     <span class="tab-label">Wheel</span>
@@ -54,6 +54,10 @@
 
             <!-- Wheel View -->
             <div id="wheel-view" class="view">
+                <div id="result-display" class="result-display hidden">
+                    <span id="result-name" class="result-name"></span>
+                </div>
+
                 <div class="wheel-container">
                     <div id="wheel" class="wheel"></div>
                     <div class="wheel-pointer"></div>
@@ -61,15 +65,6 @@
 
                 <div class="wheel-controls">
                     <button id="spin-button" class="btn btn-primary" title="Spin the wheel (Enter or Space)">Spin</button>
-                </div>
-
-                <div id="result-display" class="result-display hidden">
-                    <div class="result-content">
-                        <p class="result-label">Selected:</p>
-                        <p id="result-name" class="result-name"></p>
-                        <button id="copy-result" class="btn btn-secondary" title="Copy to clipboard">Copy to Clipboard</button>
-                        <button id="share-result" class="btn btn-secondary" title="Generate shareable link">Share Link</button>
-                    </div>
                 </div>
             </div>
 
@@ -90,21 +85,6 @@
                                 title="Name must be 2-15 characters"
                             >
                             <div id="name-error" class="error-message"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="color-palette">Color Palette:</label>
-                            <div id="color-palette" class="color-palette"></div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="custom-color">Custom Color:</label>
-                            <input
-                                id="custom-color"
-                                type="color"
-                                title="Choose a custom color"
-                            >
-                            <div id="color-preview" class="color-preview"></div>
                         </div>
 
                         <button id="add-user-btn" class="btn btn-primary">Add User</button>
@@ -197,13 +177,24 @@
                         <h3>Wheel Appearance</h3>
 
                         <div class="form-group">
-                            <label for="wheel-title">Wheel Title:</label>
+                            <label for="app-title-input">Wheel Name:</label>
+                            <input
+                                id="app-title-input"
+                                type="text"
+                                placeholder="Spinning Wheel"
+                                maxlength="50"
+                                title="Name displayed in the navbar"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="wheel-title">Wheel Center Text:</label>
                             <input
                                 id="wheel-title"
                                 type="text"
                                 placeholder="e.g., Pick a presenter"
                                 maxlength="30"
-                                title="Custom title for wheel"
+                                title="Custom title for wheel center"
                             >
                         </div>
 
@@ -215,10 +206,6 @@
                                 <option value="glow">Glow</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h3>Winner Celebration</h3>
 
                         <div class="form-group">
                             <label for="winner-effect">Winner Effect:</label>
@@ -259,19 +246,17 @@
                     </div>
 
                     <div class="settings-section">
-                        <h3>Sharing</h3>
+                        <h3>Data Management</h3>
 
                         <div class="form-group">
-                            <button id="generate-link" class="btn btn-secondary">Generate Shareable Link</button>
-                            <div id="shared-link-display" class="hidden">
-                                <input id="shared-link-input" type="text" readonly title="Shareable link">
-                                <button id="copy-link" class="btn btn-secondary">Copy Link</button>
-                            </div>
+                            <button id="download-data" class="btn btn-secondary">Download All Data (JSON)</button>
                         </div>
-                    </div>
 
-                    <div class="settings-section">
-                        <h3>Data Management</h3>
+                        <div class="form-group">
+                            <label for="upload-data-input">Upload Data from JSON File:</label>
+                            <input type="file" id="upload-data-input" accept=".json" style="display: none;">
+                            <button id="upload-data-btn" class="btn btn-secondary">Choose File & Upload</button>
+                        </div>
 
                         <div class="form-group">
                             <button id="reset-app" class="btn btn-danger">Reset Everything</button>

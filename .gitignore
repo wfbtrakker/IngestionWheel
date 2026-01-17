@@ -1,0 +1,17 @@
+# Claude Code artifacts
+.claude/
+
+# Temporary files
+nul
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

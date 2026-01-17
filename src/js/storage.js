@@ -30,7 +30,10 @@ const Storage = {
     COLOR_PALETTE: [
         '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3',
         '#C7CEEA', '#FF8C42', '#FB5607', '#06D6A0',
-        '#EF476F', '#FFD166', '#06FFA5', '#FF006E'
+        '#EF476F', '#FFD166', '#06FFA5', '#FF006E',
+        '#9B59B6', '#3498DB', '#E74C3C', '#F39C12',
+        '#1ABC9C', '#2ECC71', '#E91E63', '#00BCD4',
+        '#FF5722', '#8E44AD'
     ],
 
     /**
@@ -65,7 +68,12 @@ const Storage = {
     getUsers() {
         try {
             const users = localStorage.getItem(this.STORAGE_KEYS.USERS);
-            return users ? JSON.parse(users) : [];
+            const parsedUsers = users ? JSON.parse(users) : [];
+            // Ensure all users have an enabled property (default to true for existing users)
+            return parsedUsers.map(user => ({
+                ...user,
+                enabled: user.enabled !== undefined ? user.enabled : true
+            }));
         } catch (e) {
             console.error('Error loading users:', e);
             return [];
@@ -81,11 +89,34 @@ const Storage = {
             id: Date.now().toString(),
             name: name.trim(),
             color: color,
+            enabled: true,
             createdAt: new Date().toISOString()
         };
         users.push(user);
         localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
         return user;
+    },
+
+    /**
+     * Get enabled users only (for wheel display and spinning)
+     */
+    getEnabledUsers() {
+        const users = this.getUsers();
+        return users.filter(user => user.enabled !== false);
+    },
+
+    /**
+     * Toggle user enabled state
+     */
+    toggleUserEnabled(id) {
+        const users = this.getUsers();
+        const user = users.find(u => u.id === id);
+        if (user) {
+            user.enabled = user.enabled === false ? true : false;
+            localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+            return user;
+        }
+        return null;
     },
 
     /**
@@ -414,6 +445,91 @@ const Storage = {
         localStorage.removeItem(this.STORAGE_KEYS.SETTINGS);
         localStorage.removeItem(this.STORAGE_KEYS.LAST_SELECTED);
         localStorage.setItem(this.STORAGE_KEYS.FIRST_VISIT, 'false');
+    },
+
+    /**
+     * Export all data to JSON
+     */
+    exportAllData() {
+        const data = {
+            users: this.getUsers(),
+            history: this.getHistory(),
+            settings: this.getSettings(),
+            lastSelected: localStorage.getItem(this.STORAGE_KEYS.LAST_SELECTED),
+            lastView: localStorage.getItem(this.STORAGE_KEYS.LAST_VIEW),
+            firstVisit: localStorage.getItem(this.STORAGE_KEYS.FIRST_VISIT),
+            appTitle: this.getSetting('appTitle'),
+            exportDate: new Date().toISOString(),
+            version: '1.0'
+        };
+        return data;
+    },
+
+    /**
+     * Import all data from JSON
+     */
+    importAllData(data) {
+        try {
+            // Validate data structure
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid data format');
+            }
+
+            // Import users
+            if (data.users && Array.isArray(data.users)) {
+                localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(data.users));
+            }
+
+            // Import history
+            if (data.history && Array.isArray(data.history)) {
+                localStorage.setItem(this.STORAGE_KEYS.HISTORY, JSON.stringify(data.history));
+            }
+
+            // Import settings
+            if (data.settings && typeof data.settings === 'object') {
+                localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
+            }
+
+            // Import other data
+            if (data.lastSelected) {
+                localStorage.setItem(this.STORAGE_KEYS.LAST_SELECTED, data.lastSelected);
+            }
+
+            if (data.lastView) {
+                localStorage.setItem(this.STORAGE_KEYS.LAST_VIEW, data.lastView);
+            }
+
+            if (data.firstVisit) {
+                localStorage.setItem(this.STORAGE_KEYS.FIRST_VISIT, data.firstVisit);
+            }
+
+            return true;
+        } catch (e) {
+            console.error('Error importing data:', e);
+            return false;
+        }
+    },
+
+    /**
+     * Download data as JSON file
+     */
+    downloadDataAsJSON() {
+        const data = this.exportAllData();
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const appTitle = this.getSetting('appTitle') || 'SpinningWheel';
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `${appTitle.replace(/\s+/g, '_')}_backup_${timestamp}.json`;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 };
 
