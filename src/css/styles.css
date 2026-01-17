@@ -1134,27 +1134,39 @@ input[type="checkbox"] {
     position: fixed;
     width: 30px;
     height: 40px;
-    bottom: -40px;
-    border-radius: 50% 50% 50% 0;
+    bottom: -60px;
+    border-radius: 50% 50% 45% 45%;
     pointer-events: none;
     animation: balloonRise 10s ease-in forwards;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    z-index: 1000;
 }
 
 .balloon::before {
     content: '';
     position: absolute;
-    bottom: -20px;
+    bottom: -15px;
     left: 50%;
     transform: translateX(-50%);
-    width: 2px;
-    height: 20px;
-    background: #999;
+    width: 1px;
+    height: 15px;
+    background: rgba(150, 150, 150, 0.6);
 }
 
 @keyframes balloonRise {
-    to {
-        transform: translateY(-100vh) translateX(100px);
+    0% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    95% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-110vh) translateX(100px);
         opacity: 0;
     }
 }
