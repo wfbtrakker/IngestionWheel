@@ -204,29 +204,41 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
 ## Implementation Details
 
 ### User Management View
-- Form to add new users with name and color selection
+- **Streamlined Add User Form**:
+  - Simple name input (no manual color selection)
+  - **Auto-Color Assignment**: System automatically selects unused color from 22-color palette
+  - Colors assigned sequentially from available colors
+  - With 22 colors and max 20 users, there are always unused colors
 - **Name Validation**:
   - Min 2 characters, max 15 characters
   - Prevent duplicate names (case-sensitive check)
   - Show validation error messages
-- **Color Selection**:
-  - Extended predefined color palette (10+ distinct colors)
-  - HTML5 color picker for custom colors
-  - Preview color before adding
+- **Color Management**:
+  - Extended predefined color palette (22 distinct vibrant colors)
+  - Auto-color assignment when adding users (picks first unused color)
+  - Manual color editing available via edit user modal
+  - Custom color picker in edit modal for customization
 - **CRUD Operations**:
-  - Add user with name and color
-  - Edit existing user (name and color)
+  - Add user with name only (color auto-assigned)
+  - Edit existing user (name and color via modal)
   - Delete user with confirmation
+- **Enable/Disable Users**:
+  - Checkbox for each user to enable/disable
+  - Disabled users excluded from wheel and spinning
+  - Disabled users shown with reduced opacity (50%)
+  - Only enabled users count toward minimum 2 user requirement
 - **Delete User Behavior**:
   - When user is deleted, keep history entries but show as "Deleted User"
   - Statistics still include deleted user (for historical accuracy)
   - Spinner is re-generated without the deleted user
 - **Constraints**:
-  - Minimum 2 users required (spin button disabled otherwise)
+  - Minimum 2 enabled users required (spin button disabled otherwise)
   - Maximum 20 users (block adding more, show warning)
 - **Animations**:
   - New user slices fade in when added
   - (No fade-out animation on delete)
+- **Compact Layout**:
+  - Reduced vertical spacing in add user form (8px between input and button)
 
 ### Spin Mechanics
 - **Spin Duration**:
@@ -267,26 +279,33 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
 
 ### Result Handling
 When the wheel stops:
-1. Display the selected user name prominently
+1. Display the selected user name prominently at top of wheel view
 2. **Visual Feedback**:
-   - Fixed pointer/arrow at top of wheel
-   - Highlight/glow on selected slice
+   - Fixed pointer/arrow at right side of wheel (3 o'clock position)
+   - Highlight/glow on selected slice (golden border and drop-shadow)
    - Animated highlight effect
 3. **Sound Feedback**:
    - Play stop/click sound
    - Play fanfare/notification sound (winner announcement)
 4. Record selection in history with timestamp
 5. Re-enable spin button and allow next spin
-6. **Sharing Options**:
-   - Copy result to clipboard button
-   - Generate shareable link (encodes wheel state)
+6. **Browser Integration**:
+   - Browser tab title updates with winner name (e.g., "Alice | Spinning Wheel")
+7. **Effect Clearing**:
+   - Winner effects automatically cleared when switching to other views
 
 ### Selection History View
 - Separate page/view accessible via top navigation
 - Display complete list of all spins in reverse chronological order (newest first)
-- Show for each entry: timestamp, selected user name
+- **Compact Horizontal Layout**:
+  - All data on single line per entry: Spin #, Date/Time, User Name
+  - Reduced vertical spacing (8px between entries)
+  - Smaller padding for compact display
+  - Consistent alignment with minimum widths for columns
+- Show for each entry: spin number, timestamp (date + time), selected user name
 - **History Limit**: Keep a rolling window of last 500 spins (oldest automatically removed when limit exceeded)
 - Persistence: Stored in localStorage across sessions
+- Export to CSV functionality available
 
 ### Statistics View (Part of History View)
 Displays analysis of spin results:
@@ -299,23 +318,24 @@ Displays analysis of spin results:
 - Stored in localStorage for persistence
 
 ### Settings/Options View
-- **Configurable Options**:
+- **Spin Options**:
   - Spin duration slider (1-10 seconds, default 7 seconds)
   - Animation speed multiplier (for momentum effect intensity)
-  - Sound toggle (on/off)
-  - Light/Dark theme toggle
   - Rotation direction (clockwise/counter-clockwise)
-  - Wheel title/center label customization
-  - Slice animation effect selection
-- **Sharing & Clipboard**:
-  - Copy current result to clipboard
-  - Generate shareable link (URL-encoded wheel state with users, colors, settings)
-  - When sharing link is loaded: **prompt user before overwriting** existing data
+- **Wheel Appearance**:
+  - Editable wheel name/title (shows in navbar and browser tab)
+  - Wheel center text customization
+  - Slice animation effect selection (none, pulse, glow)
+  - Winner celebration effect selection (confetti, fireworks, sparkles, etc.)
+- **Theme & Sound**:
+  - Light/Dark theme toggle
+  - Sound effects toggle (on/off)
 - **Data Management**:
+  - **Download All Data (JSON)**: Export complete backup of users, history, settings
+  - **Upload Data (JSON)**: Import backup file with confirmation prompt
   - Clear History button (deletes spins, keeps users)
-  - Reset App button (clears everything: users, colors, history)
-  - Export History (download as CSV format)
-  - Settings saved to localStorage for persistence
+  - Reset App button (clears everything: users, colors, history, settings)
+  - All data persists in localStorage
 - **View Memory**:
   - Remember last viewed section (Wheel, Users, History, Settings)
   - Return to that view on page reload
@@ -329,11 +349,13 @@ Displays analysis of spin results:
 
 ### Navigation
 - **Top Navigation Bar**: Tabs/menu for switching between views
-  - Wheel
-  - User Management
-  - History
-  - Settings
+  - **Editable Wheel Name**: Click navbar title to edit (contenteditable)
+  - Wheel tab (keyboard shortcut: 1)
+  - Users tab (keyboard shortcut: 2)
+  - History tab (keyboard shortcut: 3)
+  - Settings tab (keyboard shortcut: 4)
 - Mobile-responsive: May collapse to hamburger menu on small screens
+- Wheel name syncs between navbar, settings input, and browser tab title
 
 ### Dark Mode
 - **Manual Toggle**: Dark mode setting in Settings view
@@ -399,9 +421,12 @@ If sound files are not available locally, the app should gracefully degrade (no 
 - **User Management:**
   - Full CRUD operations (add, edit, delete names)
   - 2-15 character name validation, no duplicates
-  - Extended color palette (10+ colors) + custom color picker
+  - **22-color palette with auto-assignment** on user creation
+  - Custom color editing via edit modal
+  - **Enable/disable users** (checkbox for each user)
   - Deleted users preserved in history as "Deleted User"
   - New user fade-in animation
+  - Compact UI with reduced spacing
 - **Wheel Display:**
   - Names inside slices with ellipsis truncation for long names
   - Responsive scaling (maintains aspect ratio on all devices)
@@ -416,13 +441,14 @@ If sound files are not available locally, the app should gracefully degrade (no 
   - Customizable wheel title/label
   - Slice animation effects (pulse, glow, etc.)
 - **Result Display:**
-  - Prominent winner announcement
+  - Prominent winner announcement at top of wheel view
   - Browser tab title updates with winner name
-  - Copy to clipboard button
-  - Shareable link (URL-encoded state with overwrite confirmation)
+  - Golden glow/highlight on winning slice
   - Result persists until next spin
+  - Winner effects cleared when switching views
 - **History & Statistics:**
   - Separate History view in top navigation
+  - **Compact horizontal layout** (all data on one line per entry)
   - Rolling 500-spin history limit
   - Win count per user
   - Selection percentage
@@ -440,8 +466,13 @@ If sound files are not available locally, the app should gracefully degrade (no 
   - Sound toggle
   - Light/Dark theme toggle
   - Rotation direction
-  - Wheel title customization
+  - **Editable wheel name** (navbar and settings)
+  - Wheel center text customization
   - Slice animation selection
+  - Winner effect selection
+  - **Data import/export** (JSON backup and restore)
+  - Download all data button
+  - Upload data button with confirmation
 - **Onboarding:**
   - Welcome screen with example users (Alice, Bob, Charlie)
   - Auto-dismiss on first user addition
@@ -466,18 +497,24 @@ If sound files are not available locally, the app should gracefully degrade (no 
 
 **Acceptance Criteria:**
 - Users selected randomly with prevention of consecutive same-user selection
-- Equal probability for all users (except consecutive prevention)
-- Minimum 2 users required to spin; maximum 20 supported
+- Equal probability for all enabled users (except consecutive prevention)
+- **Auto-color assignment** from 22-color palette when adding users
+- **Enable/disable functionality** for users (disabled users excluded from wheel)
+- Minimum 2 enabled users required to spin; maximum 20 users supported
 - Spin duration configurable 1-10 seconds (default: 7)
 - History limited to rolling 500 spins
+- **Compact history layout** with all data on single horizontal line
 - Statistics accurate (win counts, percentages, streaks)
 - All data persists in localStorage
+- **Data import/export** via JSON files with confirmation prompts
+- **Editable wheel name** in navbar syncs to browser tab and settings
 - App works on desktop and mobile devices
 - Full keyboard and touch interaction support
 - Works on latest browser versions
 - Full offline functionality with no external dependencies
-- Shareable links load with confirmation prompt
 - Browser tab title reflects winner name
 - Long names truncated with ellipsis in slices
 - New users fade in when added
 - Deleted users preserved in history
+- Winner effects cleared when switching views
+- Compact UI with reduced spacing
