@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinning Wheel</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-brand">Spinning Wheel</div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-view="wheel" title="Wheel (1)">
+                    <span class="tab-label">Wheel</span>
+                </button>
+                <button class="nav-tab" data-view="users" title="Users (2)">
+                    <span class="tab-label">Users</span>
+                </button>
+                <button class="nav-tab" data-view="history" title="History (3)">
+                    <span class="tab-label">History</span>
+                </button>
+                <button class="nav-tab" data-view="settings" title="Settings (4)">
+                    <span class="tab-label">Settings</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Welcome Screen (shown on first visit) -->
+            <div id="welcome-view" class="view active">
+                <div class="welcome-container">
+                    <h1>Welcome to Spinning Wheel</h1>
+                    <p>Randomly select team members with a colorful spinning wheel.</p>
+                    <p>Get started by adding team members below:</p>
+
+                    <div class="welcome-examples">
+                        <h3>Example Team Members:</h3>
+                        <ul>
+                            <li>Alice</li>
+                            <li>Bob</li>
+                            <li>Charlie</li>
+                        </ul>
+                        <p>You can customize with your own names!</p>
+                    </div>
+
+                    <div class="welcome-actions">
+                        <button id="welcome-go-to-users" class="btn btn-primary">Get Started</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wheel View -->
+            <div id="wheel-view" class="view">
+                <div class="wheel-container">
+                    <div id="wheel" class="wheel"></div>
+                    <div class="wheel-pointer"></div>
+                </div>
+
+                <div class="wheel-controls">
+                    <button id="spin-button" class="btn btn-primary" title="Spin the wheel (Enter or Space)">Spin</button>
+                </div>
+
+                <div id="result-display" class="result-display hidden">
+                    <div class="result-content">
+                        <p class="result-label">Selected:</p>
+                        <p id="result-name" class="result-name"></p>
+                        <button id="copy-result" class="btn btn-secondary" title="Copy to clipboard">Copy to Clipboard</button>
+                        <button id="share-result" class="btn btn-secondary" title="Generate shareable link">Share Link</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users View -->
+            <div id="users-view" class="view">
+                <div class="users-container">
+                    <h2>Manage Users</h2>
+
+                    <div class="user-form">
+                        <h3>Add New User</h3>
+                        <div class="form-group">
+                            <label for="user-name-input">Name (2-15 characters):</label>
+                            <input
+                                id="user-name-input"
+                                type="text"
+                                placeholder="Enter name"
+                                maxlength="15"
+                                title="Name must be 2-15 characters"
+                            >
+                            <div id="name-error" class="error-message"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="color-palette">Color Palette:</label>
+                            <div id="color-palette" class="color-palette"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="custom-color">Custom Color:</label>
+                            <input
+                                id="custom-color"
+                                type="color"
+                                title="Choose a custom color"
+                            >
+                            <div id="color-preview" class="color-preview"></div>
+                        </div>
+
+                        <button id="add-user-btn" class="btn btn-primary">Add User</button>
+                    </div>
+
+                    <div class="users-list">
+                        <h3>Current Users (<span id="user-count">0</span>/20)</h3>
+                        <div id="users-grid" class="users-grid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History View -->
+            <div id="history-view" class="view">
+                <div class="history-container">
+                    <h2>Spin History & Statistics</h2>
+
+                    <div class="history-tabs">
+                        <button class="history-tab active" data-tab="history-list" title="View all spins">History</button>
+                        <button class="history-tab" data-tab="statistics" title="View statistics">Statistics</button>
+                    </div>
+
+                    <!-- History List Tab -->
+                    <div id="history-list" class="history-tab-content active">
+                        <div class="history-actions">
+                            <button id="export-csv" class="btn btn-secondary">Export CSV</button>
+                            <button id="clear-history" class="btn btn-danger">Clear History</button>
+                        </div>
+                        <div id="history-entries" class="history-entries"></div>
+                    </div>
+
+                    <!-- Statistics Tab -->
+                    <div id="statistics" class="history-tab-content">
+                        <div id="statistics-content" class="statistics-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settings-view" class="view">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+
+                    <div class="settings-section">
+                        <h3>Spin Options</h3>
+
+                        <div class="form-group">
+                            <label for="spin-duration-slider">Spin Duration: <span id="duration-display">7</span> seconds</label>
+                            <input
+                                id="spin-duration-slider"
+                                type="range"
+                                min="1"
+                                max="10"
+                                value="7"
+                                title="Adjust spin duration"
+                            >
+                            <div class="slider-labels">
+                                <span>1s</span>
+                                <span>10s</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="animation-speed">Animation Speed Multiplier:</label>
+                            <input
+                                id="animation-speed"
+                                type="range"
+                                min="0.5"
+                                max="2"
+                                step="0.1"
+                                value="1"
+                                title="Adjust momentum effect"
+                            >
+                            <div class="slider-labels">
+                                <span>Slow</span>
+                                <span>Fast</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rotation-direction">Rotation Direction:</label>
+                            <select id="rotation-direction" title="Choose spin direction">
+                                <option value="clockwise">Clockwise</option>
+                                <option value="counter-clockwise">Counter-clockwise</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Wheel Appearance</h3>
+
+                        <div class="form-group">
+                            <label for="wheel-title">Wheel Title:</label>
+                            <input
+                                id="wheel-title"
+                                type="text"
+                                placeholder="e.g., Pick a presenter"
+                                maxlength="30"
+                                title="Custom title for wheel"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="slice-animation">Slice Animation:</label>
+                            <select id="slice-animation" title="Choose slice effect">
+                                <option value="none">None</option>
+                                <option value="pulse">Pulse</option>
+                                <option value="glow">Glow</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Winner Celebration</h3>
+
+                        <div class="form-group">
+                            <label for="winner-effect">Winner Effect:</label>
+                            <select id="winner-effect" title="Choose a celebration effect">
+                                <option value="none">None</option>
+                                <option value="glow">Subtle Glow Pulse</option>
+                                <option value="confetti">Confetti Burst</option>
+                                <option value="balloons">Balloons Rise</option>
+                                <option value="sparkles">Sparkles</option>
+                                <option value="fireworks">Fireworks</option>
+                                <option value="rainbow">Rainbow Flash</option>
+                                <option value="bounce">Bounce Animation</option>
+                                <option value="lightshow">Light Show</option>
+                                <option value="tickertape">Ticker Tape</option>
+                                <option value="screenflash">Screen Flash</option>
+                                <option value="popup">Winner Popup</option>
+                                <option value="celebration">Celebration Pack (All Effects)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Theme & Sound</h3>
+
+                        <div class="form-group">
+                            <label>
+                                <input id="dark-mode-toggle" type="checkbox" title="Toggle dark mode">
+                                Dark Mode
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input id="sound-toggle" type="checkbox" checked title="Toggle sound effects">
+                                Sound Effects
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Sharing</h3>
+
+                        <div class="form-group">
+                            <button id="generate-link" class="btn btn-secondary">Generate Shareable Link</button>
+                            <div id="shared-link-display" class="hidden">
+                                <input id="shared-link-input" type="text" readonly title="Shareable link">
+                                <button id="copy-link" class="btn btn-secondary">Copy Link</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Data Management</h3>
+
+                        <div class="form-group">
+                            <button id="reset-app" class="btn btn-danger">Reset Everything</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Help/FAQ Modal -->
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Help & FAQ</h2>
+                <button id="close-help" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="faq-section">
+                    <h3>How to Add Users</h3>
+                    <p>Go to the Users tab, enter a name (2-15 characters), select a color from the palette or custom color picker, and click "Add User". You need at least 2 users to spin.</p>
+                </div>
+                <div class="faq-section">
+                    <h3>How to Spin</h3>
+                    <p>Go to the Wheel tab and click the "Spin" button, or press Enter/Space. The wheel will spin and randomly select a user. Press 1 to quickly navigate to the Wheel tab.</p>
+                </div>
+                <div class="faq-section">
+                    <h3>Keyboard Shortcuts</h3>
+                    <ul>
+                        <li><strong>1</strong> - Go to Wheel</li>
+                        <li><strong>2</strong> - Go to Users</li>
+                        <li><strong>3</strong> - Go to History</li>
+                        <li><strong>4</strong> - Go to Settings</li>
+                        <li><strong>Arrow Keys</strong> - Switch tabs</li>
+                        <li><strong>Enter/Space</strong> - Spin wheel</li>
+                    </ul>
+                </div>
+                <div class="faq-section">
+                    <h3>View History & Statistics</h3>
+                    <p>Go to the History tab to see all previous spins. The Statistics tab shows win counts, selection percentages, and streaks for each user.</p>
+                </div>
+                <div class="faq-section">
+                    <h3>Export Data</h3>
+                    <p>In the History tab, click "Export CSV" to download your spin history in spreadsheet format.</p>
+                </div>
+                <div class="faq-section">
+                    <h3>Share Your Wheel</h3>
+                    <p>In Settings, click "Generate Shareable Link" to create a link that includes your current users, colors, and settings. Recipients will be asked before the data loads.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User</h2>
+                <button id="close-edit-user" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit-user-name">Name (2-15 characters):</label>
+                    <input
+                        id="edit-user-name"
+                        type="text"
+                        placeholder="Enter name"
+                        maxlength="15"
+                        title="Name must be 2-15 characters"
+                    >
+                    <div id="edit-name-error" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-color-palette">Color Palette:</label>
+                    <div id="edit-color-palette" class="color-palette"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-custom-color">Custom Color:</label>
+                    <input
+                        id="edit-custom-color"
+                        type="color"
+                        title="Choose a custom color"
+                    >
+                    <div id="edit-color-preview" class="color-preview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="edit-user-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="edit-user-save" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div id="confirm-dialog" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="confirm-title">Confirm Action</h2>
+                <button id="close-confirm" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-ok" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/js/storage.js"></script>
+    <script src="src/js/sounds.js"></script>
+    <script src="src/js/effects.js"></script>
+    <script src="src/js/wheel.js"></script>
+    <script src="src/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+/**
+ * Storage Module - Manages all localStorage operations
+ * Handles: users, colors, history, settings, and data persistence
+ */
+
+const Storage = {
+    // Storage keys
+    STORAGE_KEYS: {
+        USERS: 'wheel_users',
+        HISTORY: 'wheel_history',
+        SETTINGS: 'wheel_settings',
+        LAST_VIEW: 'wheel_last_view',
+        FIRST_VISIT: 'wheel_first_visit',
+        LAST_SELECTED: 'wheel_last_selected'
+    },
+
+    // Default settings
+    DEFAULT_SETTINGS: {
+        spinDuration: 7,
+        animationSpeed: 1,
+        rotationDirection: 'clockwise',
+        wheelTitle: 'Pick a Winner',
+        sliceAnimation: 'none',
+        soundEnabled: true,
+        darkMode: false,
+        winnerEffect: 'confetti'
+    },
+
+    // Color palette
+    COLOR_PALETTE: [
+        '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3',
+        '#C7CEEA', '#FF8C42', '#FB5607', '#06D6A0',
+        '#EF476F', '#FFD166', '#06FFA5', '#FF006E'
+    ],
+
+    /**
+     * Initialize storage - set up first visit flag
+     */
+    init() {
+        if (!localStorage.getItem(this.STORAGE_KEYS.FIRST_VISIT)) {
+            localStorage.setItem(this.STORAGE_KEYS.FIRST_VISIT, 'false');
+        }
+    },
+
+    /**
+     * Check if this is the first visit
+     */
+    isFirstVisit() {
+        return localStorage.getItem(this.STORAGE_KEYS.FIRST_VISIT) === 'false' &&
+            this.getUsers().length === 0;
+    },
+
+    /**
+     * Mark as not first visit
+     */
+    markFirstVisitDone() {
+        localStorage.setItem(this.STORAGE_KEYS.FIRST_VISIT, 'true');
+    },
+
+    // ==================== USERS ====================
+
+    /**
+     * Get all users
+     */
+    getUsers() {
+        try {
+            const users = localStorage.getItem(this.STORAGE_KEYS.USERS);
+            return users ? JSON.parse(users) : [];
+        } catch (e) {
+            console.error('Error loading users:', e);
+            return [];
+        }
+    },
+
+    /**
+     * Add a new user
+     */
+    addUser(name, color) {
+        const users = this.getUsers();
+        const user = {
+            id: Date.now().toString(),
+            name: name.trim(),
+            color: color,
+            createdAt: new Date().toISOString()
+        };
+        users.push(user);
+        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+        return user;
+    },
+
+    /**
+     * Update user
+     */
+    updateUser(id, updates) {
+        const users = this.getUsers();
+        const user = users.find(u => u.id === id);
+        if (user) {
+            Object.assign(user, updates);
+            localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+            return user;
+        }
+        return null;
+    },
+
+    /**
+     * Delete user
+     */
+    deleteUser(id) {
+        const users = this.getUsers();
+        const index = users.findIndex(u => u.id === id);
+        if (index !== -1) {
+            users.splice(index, 1);
+            localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+            return true;
+        }
+        return false;
+    },
+
+    /**
+     * Check if user exists by name
+     */
+    userExists(name) {
+        const users = this.getUsers();
+        return users.some(u => u.name.toLowerCase() === name.toLowerCase());
+    },
+
+    /**
+     * Get user by ID
+     */
+    getUser(id) {
+        const users = this.getUsers();
+        return users.find(u => u.id === id) || null;
+    },
+
+    // ==================== HISTORY ====================
+
+    /**
+     * Get spin history
+     */
+    getHistory() {
+        try {
+            const history = localStorage.getItem(this.STORAGE_KEYS.HISTORY);
+            return history ? JSON.parse(history) : [];
+        } catch (e) {
+            console.error('Error loading history:', e);
+            return [];
+        }
+    },
+
+    /**
+     * Add spin to history
+     */
+    addSpinEntry(userId, userName) {
+        const history = this.getHistory();
+        const entry = {
+            id: Date.now().toString(),
+            userId: userId,
+            userName: userName,
+            timestamp: new Date().toISOString(),
+            spinNumber: history.length + 1
+        };
+        history.push(entry);
+
+        // Keep rolling window of last 500 spins
+        if (history.length > 500) {
+            history.shift();
+        }
+
+        localStorage.setItem(this.STORAGE_KEYS.HISTORY, JSON.stringify(history));
+        this.setLastSelected(userId);
+        return entry;
+    },
+
+    /**
+     * Clear all history
+     */
+    clearHistory() {
+        localStorage.setItem(this.STORAGE_KEYS.HISTORY, JSON.stringify([]));
+    },
+
+    /**
+     * Get last selected user ID
+     */
+    getLastSelected() {
+        return localStorage.getItem(this.STORAGE_KEYS.LAST_SELECTED);
+    },
+
+    /**
+     * Set last selected user ID
+     */
+    setLastSelected(userId) {
+        localStorage.setItem(this.STORAGE_KEYS.LAST_SELECTED, userId);
+    },
+
+    /**
+     * Calculate statistics from history
+     */
+    calculateStatistics() {
+        const history = this.getHistory();
+        const users = this.getUsers();
+        const stats = {};
+
+        // Initialize stats for each user
+        users.forEach(user => {
+            stats[user.id] = {
+                user: user,
+                winCount: 0,
+                selections: 0,
+                currentStreak: 0,
+                longestStreak: 0
+            };
+        });
+
+        // Count selections
+        let lastUserId = null;
+        let currentStreak = null;
+
+        history.forEach(entry => {
+            if (stats[entry.userId]) {
+                stats[entry.userId].winCount++;
+                stats[entry.userId].selections++;
+
+                // Calculate streaks
+                if (entry.userId === lastUserId) {
+                    if (currentStreak === null) {
+                        currentStreak = { userId: entry.userId, count: 1 };
+                    } else {
+                        currentStreak.count++;
+                    }
+                } else {
+                    if (currentStreak && stats[currentStreak.userId]) {
+                        stats[currentStreak.userId].longestStreak =
+                            Math.max(stats[currentStreak.userId].longestStreak, currentStreak.count);
+                    }
+                    currentStreak = { userId: entry.userId, count: 1 };
+                }
+                lastUserId = entry.userId;
+            }
+        });
+
+        // Finalize current streak
+        if (currentStreak && stats[currentStreak.userId]) {
+            stats[currentStreak.userId].currentStreak = currentStreak.count;
+            stats[currentStreak.userId].longestStreak =
+                Math.max(stats[currentStreak.userId].longestStreak, currentStreak.count);
+        }
+
+        // Calculate percentages
+        const totalSpins = history.length;
+        Object.values(stats).forEach(stat => {
+            stat.percentage = totalSpins > 0 ? ((stat.winCount / totalSpins) * 100).toFixed(1) : 0;
+        });
+
+        return stats;
+    },
+
+    // ==================== SETTINGS ====================
+
+    /**
+     * Get all settings
+     */
+    getSettings() {
+        try {
+            const settings = localStorage.getItem(this.STORAGE_KEYS.SETTINGS);
+            return settings ? { ...this.DEFAULT_SETTINGS, ...JSON.parse(settings) } : this.DEFAULT_SETTINGS;
+        } catch (e) {
+            console.error('Error loading settings:', e);
+            return this.DEFAULT_SETTINGS;
+        }
+    },
+
+    /**
+     * Update settings
+     */
+    updateSettings(updates) {
+        const settings = this.getSettings();
+        const updated = { ...settings, ...updates };
+        localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+        return updated;
+    },
+
+    /**
+     * Get single setting
+     */
+    getSetting(key) {
+        const settings = this.getSettings();
+        return settings[key] !== undefined ? settings[key] : this.DEFAULT_SETTINGS[key];
+    },
+
+    /**
+     * Set single setting
+     */
+    setSetting(key, value) {
+        const settings = this.getSettings();
+        settings[key] = value;
+        localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    },
+
+    // ==================== VIEW NAVIGATION ====================
+
+    /**
+     * Get last viewed section
+     */
+    getLastView() {
+        return localStorage.getItem(this.STORAGE_KEYS.LAST_VIEW) || 'wheel';
+    },
+
+    /**
+     * Set last viewed section
+     */
+    setLastView(viewName) {
+        localStorage.setItem(this.STORAGE_KEYS.LAST_VIEW, viewName);
+    },
+
+    // ==================== EXPORT/IMPORT ====================
+
+    /**
+     * Export history as CSV
+     */
+    exportHistoryAsCSV() {
+        const history = this.getHistory();
+        if (history.length === 0) {
+            alert('No history to export');
+            return;
+        }
+
+        let csv = 'Spin #,Date,Time,User Name\n';
+        history.forEach(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString();
+            csv += `${entry.spinNumber},"${dateStr}","${timeStr}","${entry.userName}"\n`;
+        });
+
+        // Download CSV file
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `wheel-history-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+    },
+
+    /**
+     * Export history as JSON
+     */
+    exportHistoryAsJSON() {
+        const data = {
+            exportDate: new Date().toISOString(),
+            users: this.getUsers(),
+            history: this.getHistory(),
+            statistics: this.calculateStatistics()
+        };
+
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `wheel-data-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+    },
+
+    /**
+     * Generate shareable link with encoded state
+     */
+    generateShareableLink() {
+        const state = {
+            users: this.getUsers(),
+            settings: this.getSettings()
+        };
+        const encoded = btoa(JSON.stringify(state));
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?share=${encoded}`;
+    },
+
+    /**
+     * Load state from shared link
+     */
+    loadFromShareableLink(encodedState) {
+        try {
+            const state = JSON.parse(atob(encodedState));
+            if (state.users && Array.isArray(state.users)) {
+                return state;
+            }
+        } catch (e) {
+            console.error('Error loading shared state:', e);
+        }
+        return null;
+    },
+
+    /**
+     * Apply shared state (users and settings)
+     */
+    applySharedState(state) {
+        if (state.users && Array.isArray(state.users)) {
+            localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(state.users));
+        }
+        if (state.settings && typeof state.settings === 'object') {
+            localStorage.setItem(this.STORAGE_KEYS.SETTINGS, JSON.stringify(state.settings));
+        }
+    },
+
+    // ==================== RESET ====================
+
+    /**
+     * Reset entire app (clear all data)
+     */
+    resetAll() {
+        localStorage.removeItem(this.STORAGE_KEYS.USERS);
+        localStorage.removeItem(this.STORAGE_KEYS.HISTORY);
+        localStorage.removeItem(this.STORAGE_KEYS.SETTINGS);
+        localStorage.removeItem(this.STORAGE_KEYS.LAST_SELECTED);
+        localStorage.setItem(this.STORAGE_KEYS.FIRST_VISIT, 'false');
+    }
+};
+
+// Initialize storage on load
+Storage.init();
