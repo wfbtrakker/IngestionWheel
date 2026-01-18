@@ -495,6 +495,8 @@ input[type="checkbox"] {
     display: flex;
     justify-content: center;
     gap: var(--spacing-md);
+    position: relative;
+    z-index: 1100;
 }
 
 .result-display {
@@ -506,6 +508,8 @@ input[type="checkbox"] {
     box-shadow: var(--shadow);
     animation: slideDown var(--transition-normal);
     font-size: 18px;
+    position: relative;
+    z-index: 1100;
 }
 
 @keyframes slideDown {
@@ -1147,6 +1151,7 @@ input[type="checkbox"] {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
     opacity: 0;
     z-index: 1000;
+    cursor: default;
 }
 
 .balloon::before {
@@ -1248,6 +1253,8 @@ input[type="checkbox"] {
     pointer-events: none;
     animation: lightPulseAnimation 10s ease-out forwards;
     box-shadow: 0 0 20px #FFD700;
+    cursor: default;
+    z-index: 1000;
 }
 
 @keyframes lightPulseAnimation {
@@ -1289,6 +1296,7 @@ input[type="checkbox"] {
     pointer-events: none;
     z-index: 1000;
     animation: screenFlashAnimation 10s ease-out;
+    cursor: default;
 }
 
 @keyframes screenFlashAnimation {
@@ -1313,6 +1321,7 @@ input[type="checkbox"] {
     z-index: 1001;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     animation: popupAnimation 10s ease-out forwards;
+    cursor: default;
 }
 
 @keyframes popupAnimation {

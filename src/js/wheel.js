@@ -349,11 +349,18 @@ const Wheel = {
             this.spinTimeoutId = null;
         }
 
-        // Reset spinning flag and enable button
+        // Reset spinning flag first
         this.isSpinning = false;
 
+        // Re-enable button if there are enough users
         if (spinButton) {
-            spinButton.disabled = false;
+            const enabledUsers = Storage.getEnabledUsers();
+            if (enabledUsers.length >= 2) {
+                spinButton.disabled = false;
+                // Ensure button is clickable by forcing style update
+                spinButton.style.pointerEvents = 'auto';
+                spinButton.style.cursor = 'pointer';
+            }
         }
     },
 
