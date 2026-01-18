@@ -500,26 +500,30 @@ input[type="checkbox"] {
 }
 
 .result-display {
-    margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-xs) var(--spacing-md);
+    position: fixed;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--spacing-md) var(--spacing-xl);
     background-color: var(--bg-secondary);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     text-align: center;
-    box-shadow: var(--shadow);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     animation: slideDown var(--transition-normal);
     font-size: 18px;
-    position: relative;
     z-index: 1100;
+    min-width: 250px;
+    max-width: 80vw;
 }
 
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateX(-50%) translateY(-20px) scale(0.9);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(-50%) translateY(0) scale(1);
     }
 }
 
@@ -535,9 +539,23 @@ input[type="checkbox"] {
 }
 
 .result-name {
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
     color: var(--primary-color);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    display: block;
+    margin: var(--spacing-xs) 0;
+}
+
+@media (max-width: 768px) {
+    .result-name {
+        font-size: 24px;
+    }
+
+    .result-display {
+        top: 20%;
+        padding: var(--spacing-sm) var(--spacing-lg);
+    }
 }
 
 .result-display .btn {
