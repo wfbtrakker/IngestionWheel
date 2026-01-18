@@ -384,16 +384,21 @@ const App = {
                 card.classList.add('user-disabled');
             }
 
+            // User name at the top
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'user-name';
+            nameDiv.textContent = user.name;
+
+            // Content wrapper for color, checkbox, and buttons
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'user-card-content';
+
             const colorDiv = document.createElement('div');
             colorDiv.className = 'user-color';
             colorDiv.style.backgroundColor = user.color;
 
             const infoDiv = document.createElement('div');
             infoDiv.className = 'user-info';
-
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'user-name';
-            nameDiv.textContent = user.name;
 
             // Add enabled/disabled checkbox
             const checkboxContainer = document.createElement('label');
@@ -414,8 +419,6 @@ const App = {
 
             checkboxContainer.appendChild(checkbox);
             checkboxContainer.appendChild(checkboxLabel);
-
-            infoDiv.appendChild(nameDiv);
             infoDiv.appendChild(checkboxContainer);
 
             const actionsDiv = document.createElement('div');
@@ -438,9 +441,12 @@ const App = {
             actionsDiv.appendChild(editBtn);
             actionsDiv.appendChild(deleteBtn);
 
-            card.appendChild(colorDiv);
-            card.appendChild(infoDiv);
-            card.appendChild(actionsDiv);
+            contentDiv.appendChild(colorDiv);
+            contentDiv.appendChild(infoDiv);
+            contentDiv.appendChild(actionsDiv);
+
+            card.appendChild(nameDiv);
+            card.appendChild(contentDiv);
 
             usersGrid.appendChild(card);
         });
