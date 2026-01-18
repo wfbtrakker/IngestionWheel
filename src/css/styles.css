@@ -514,6 +514,11 @@ input[type="checkbox"] {
     z-index: 1100;
     min-width: 250px;
     max-width: 80vw;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.result-display.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
 }
 
 @keyframes slideDown {
@@ -524,6 +529,17 @@ input[type="checkbox"] {
     to {
         opacity: 1;
         transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.95);
     }
 }
 

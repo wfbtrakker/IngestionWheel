@@ -8,6 +8,7 @@ const App = {
     selectedColor: null,
     editingUser: null,
     editingUserColor: null,
+    resultHideTimeout: null,
 
     /**
      * Initialize the application
@@ -217,11 +218,28 @@ const App = {
         const resultDisplay = document.getElementById('result-display');
         const resultName = document.getElementById('result-name');
 
+        // Clear any existing hide timeout
+        if (this.resultHideTimeout) {
+            clearTimeout(this.resultHideTimeout);
+            this.resultHideTimeout = null;
+        }
+
         resultName.textContent = user.name;
-        resultDisplay.classList.remove('hidden');
+        resultDisplay.classList.remove('hidden', 'fade-out');
 
         // Trigger winner effect
         Effects.triggerWinnerEffect(user.name);
+
+        // Auto-hide after 10 seconds with fade-out animation
+        this.resultHideTimeout = setTimeout(() => {
+            resultDisplay.classList.add('fade-out');
+            // Hide completely after animation finishes
+            setTimeout(() => {
+                resultDisplay.classList.add('hidden');
+                resultDisplay.classList.remove('fade-out');
+            }, 500);
+            this.resultHideTimeout = null;
+        }, 10000);
     },
 
     /**
