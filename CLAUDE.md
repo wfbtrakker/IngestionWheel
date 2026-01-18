@@ -178,6 +178,7 @@ The app is a **multi-view single-page application** with navigation between diff
 
 ### Navigation Between Views
 - **Number Keys**: 1 (Wheel) | 2 (Users) | 3 (History) | 4 (Settings)
+  - **Important**: Keyboard shortcuts are disabled when typing in input fields to prevent accidental navigation
 - **Arrow Keys**: Left/Right arrows cycle through tabs
 - **Mnemonic Shortcuts**: Alt+H for History (and similar)
 - **Tab Navigation**: Full keyboard navigation through form fields
@@ -239,6 +240,11 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
   - (No fade-out animation on delete)
 - **Compact Layout**:
   - Reduced vertical spacing in add user form (8px between input and button)
+- **Mobile Layout** (≤768px):
+  - User cards display vertically with name at top
+  - Name centered with border separator below
+  - Color box, enabled toggle, and Edit/Delete buttons arranged horizontally
+  - Buttons sized to fit within card boundaries
 
 ### Spin Mechanics
 - **Spin Duration**:
@@ -246,7 +252,9 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
   - Default: 7 seconds on first load
   - User can adjust duration in Settings
 - **Deceleration Effect**: Momentum-based animation (gradual slowdown)
-- **Button State**: Disabled while spinning to prevent simultaneous spins
+- **Button State**:
+  - Disabled while spinning to prevent simultaneous spins
+  - Z-index layering ensures button stays clickable above winner effects
 - **Keyboard Support**:
   - Enter or Space key triggers spin
   - Tab navigation through form fields
@@ -261,9 +269,10 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
   - Completely random but **prevents same user from being selected twice in a row**
   - If last selected user matches new random pick, re-roll until different user selected
 - **Result Display**:
-  - Keep result visible until next spin
+  - Winner displayed as overlay at 25% from top (doesn't push wheel down)
+  - Auto-hides after 10 seconds with smooth fade-out animation
   - Browser tab title updates with winner name (e.g., "John Doe | Spinning Wheel")
-  - Result always visible; no auto-clear
+  - Overlay positioning ensures wheel stays in place during result display
 
 ### Wheel Display & Rendering
 - **User Names on Slices**: Display names inside each slice (text overlay)
@@ -279,11 +288,13 @@ When the wheel stops, JavaScript calculates which slice is at the top (or design
 
 ### Result Handling
 When the wheel stops:
-1. Display the selected user name prominently at top of wheel view
+1. Display the selected user name as overlay positioned at 25% from top
 2. **Visual Feedback**:
+   - Winner display overlays wheel (doesn't push it down the page)
    - Fixed pointer/arrow at right side of wheel (3 o'clock position)
    - Highlight/glow on selected slice (golden border and drop-shadow)
    - Animated highlight effect
+   - Larger, prominent winner name with text shadow
 3. **Sound Feedback**:
    - Play stop/click sound
    - Play fanfare/notification sound (winner announcement)
@@ -291,17 +302,25 @@ When the wheel stops:
 5. Re-enable spin button and allow next spin
 6. **Browser Integration**:
    - Browser tab title updates with winner name (e.g., "Alice | Spinning Wheel")
-7. **Effect Clearing**:
+7. **Auto-Hide**:
+   - Winner display automatically fades out after 10 seconds
+   - Smooth fade-out animation (0.5s duration)
+8. **Effect Clearing**:
    - Winner effects automatically cleared when switching to other views
 
 ### Selection History View
 - Separate page/view accessible via top navigation
 - Display complete list of all spins in reverse chronological order (newest first)
-- **Compact Horizontal Layout**:
+- **Compact Horizontal Layout** (Desktop):
   - All data on single line per entry: Spin #, Date/Time, User Name
   - Reduced vertical spacing (8px between entries)
   - Smaller padding for compact display
   - Consistent alignment with minimum widths for columns
+- **Mobile Layout** (≤768px):
+  - Two-row layout per entry
+  - First row: Spin # and timestamp
+  - Second row: User name (full width with word-wrap)
+  - Border separator between rows
 - Show for each entry: spin number, timestamp (date + time), selected user name
 - **History Limit**: Keep a rolling window of last 500 spins (oldest automatically removed when limit exceeded)
 - Persistence: Stored in localStorage across sessions
@@ -354,7 +373,11 @@ Displays analysis of spin results:
   - Users tab (keyboard shortcut: 2)
   - History tab (keyboard shortcut: 3)
   - Settings tab (keyboard shortcut: 4)
-- Mobile-responsive: May collapse to hamburger menu on small screens
+- **Mobile Navigation** (≤768px):
+  - Navbar sticks to top of screen (position: sticky)
+  - Full labels shown on tablets/larger phones
+  - Icon-only display on very small screens (<480px)
+  - Emoji icons: 🎡 Wheel, 👥 Users, 📊 History, ⚙️ Settings
 - Wheel name syncs between navbar, settings input, and browser tab title
 
 ### Dark Mode
@@ -427,6 +450,7 @@ If sound files are not available locally, the app should gracefully degrade (no 
   - Deleted users preserved in history as "Deleted User"
   - New user fade-in animation
   - Compact UI with reduced spacing
+  - **Mobile-optimized cards** with vertical layout (name at top)
 - **Wheel Display:**
   - Names inside slices with ellipsis truncation for long names
   - Responsive scaling (maintains aspect ratio on all devices)
@@ -441,14 +465,16 @@ If sound files are not available locally, the app should gracefully degrade (no 
   - Customizable wheel title/label
   - Slice animation effects (pulse, glow, etc.)
 - **Result Display:**
-  - Prominent winner announcement at top of wheel view
+  - Winner displayed as overlay at 25% from top (doesn't push wheel down)
+  - Auto-hides after 10 seconds with fade-out animation
   - Browser tab title updates with winner name
   - Golden glow/highlight on winning slice
-  - Result persists until next spin
+  - Larger, prominent winner name display
   - Winner effects cleared when switching views
 - **History & Statistics:**
   - Separate History view in top navigation
-  - **Compact horizontal layout** (all data on one line per entry)
+  - **Compact horizontal layout** on desktop (all data on one line per entry)
+  - **Two-row mobile layout** (spin info on first row, name on second)
   - Rolling 500-spin history limit
   - Win count per user
   - Selection percentage
@@ -458,7 +484,10 @@ If sound files are not available locally, the app should gracefully degrade (no 
   - Reset app option
 - **Navigation:**
   - Top navigation bar (Wheel, Users, History, Settings)
+  - Sticky navbar on mobile devices
+  - Emoji icons on small screens (<480px)
   - Keyboard shortcuts (number keys, arrow keys, Alt+letter)
+  - Keyboard shortcuts disabled when typing in input fields
   - View memory (remember last visited section)
 - **Settings:**
   - Spin duration slider
@@ -502,16 +531,24 @@ If sound files are not available locally, the app should gracefully degrade (no 
 - **Enable/disable functionality** for users (disabled users excluded from wheel)
 - Minimum 2 enabled users required to spin; maximum 20 users supported
 - Spin duration configurable 1-10 seconds (default: 7)
+- Spin button always clickable after wheel stops (z-index layering)
 - History limited to rolling 500 spins
-- **Compact history layout** with all data on single horizontal line
+- **Compact history layout** on desktop (all data on single horizontal line)
+- **Two-row history layout** on mobile (spin info row + name row)
 - Statistics accurate (win counts, percentages, streaks)
 - All data persists in localStorage
 - **Data import/export** via JSON files with confirmation prompts
 - **Editable wheel name** in navbar syncs to browser tab and settings
 - App works on desktop and mobile devices
+- **Mobile-optimized layouts** for user cards and history
+- **Sticky navigation** on mobile devices
+- **Emoji icons** on very small screens
 - Full keyboard and touch interaction support
+- **Keyboard shortcuts disabled** when typing in input fields
 - Works on latest browser versions
 - Full offline functionality with no external dependencies
+- **Winner overlay display** at 25% from top (doesn't push wheel down)
+- **Auto-hide winner** after 10 seconds with fade-out
 - Browser tab title reflects winner name
 - Long names truncated with ellipsis in slices
 - New users fade in when added
