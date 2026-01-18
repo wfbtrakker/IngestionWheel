@@ -879,6 +879,10 @@ input[type="checkbox"] {
     color: var(--primary-color);
 }
 
+.settings-section .btn {
+    width: 100%;
+}
+
 #shared-link-display {
     display: flex;
     gap: var(--spacing-sm);
