@@ -866,16 +866,25 @@ const App = {
      */
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Number keys for navigation
-            const number = parseInt(e.key);
-            if (number >= 1 && number <= 4) {
-                const views = ['wheel', 'users', 'history', 'settings'];
-                this.showView(views[number - 1]);
-                return;
+            // Ignore shortcuts when typing in input fields
+            const activeElement = document.activeElement;
+            const isInputField = activeElement.tagName === 'INPUT' ||
+                                 activeElement.tagName === 'TEXTAREA' ||
+                                 activeElement.tagName === 'SELECT' ||
+                                 activeElement.isContentEditable;
+
+            // Number keys for navigation (only when not typing in input)
+            if (!isInputField) {
+                const number = parseInt(e.key);
+                if (number >= 1 && number <= 4) {
+                    const views = ['wheel', 'users', 'history', 'settings'];
+                    this.showView(views[number - 1]);
+                    return;
+                }
             }
 
-            // Arrow keys for tab switching
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            // Arrow keys for tab switching (only when not typing in input)
+            if (!isInputField && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
                 const tabs = Array.from(document.querySelectorAll('.nav-tab'));
                 const activeTab = document.querySelector('.nav-tab.active');
                 const activeIndex = tabs.indexOf(activeTab);
